@@ -70,7 +70,7 @@ items = feed.entries
 
 for i in items:
     name = re.sub(' ', '_', i.title)
-    title = re.sub('[#!:]', '', name) + '_' + datetime.datetime.strptime(i.published, '%a, %d %b %Y %X +0000').strftime('%Y_%m_%d')
+    title = datetime.datetime.strptime(i.published, '%a, %d %b %Y %X +0000').strftime('%Y_%m_%d') +s '_' + re.sub('[#!:]', '', name)
     file = d + '/' + title + '.mp3'
     if os.path.isfile(file):
         logging.info("[SKP] File " + name + " already exists")
