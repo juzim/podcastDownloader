@@ -8,9 +8,14 @@ import pushbullet
 import configparser
 
 logging.basicConfig(filename='.talDownloader.log',
-                    level=logging.DEBUG,
+                    level=logging.INFO,
                     format='%(asctime)s %(message)s'
 )
+
+console = logging.StreamHandler()
+console.setLevel(logging.INFO)
+logging.getLogger('').addHandler(console)
+
 
 config = configparser.ConfigParser()
 config.sections()
