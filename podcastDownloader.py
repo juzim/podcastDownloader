@@ -1,3 +1,5 @@
+#!/usr/bin/env python 
+
 import re
 import feedparser
 import requests
@@ -12,16 +14,18 @@ import configparser
 ## add multiple sources with renaming
 ## get list of devices when not given
 
-def pushToPB( message, phone ):
-    if usePushBullet != "1" or phone is None:
+def pushToPB( message ):
+    if usePushBullet != "1" :
         return
-    push = phone.push_note( 'Podcast downloader', message )
-    if push.status_code != 200:
+    pb = pushbullet.PushBullet(pushBulletApi)
+    success, push = pb.push_note( 'Podcast downloader', message )
+    if not success:
         logging.error('[ERR] Could not push notification: ' + push.status_code)
     else:
         logging.info('Pushed notification to device')
 
-logging.basicConfig(filename='.talDownloader.log',
+
+logging.basicConfig(filename='.podRacer.log',
                     level=logging.INFO,
                     format='%(asctime)s %(message)s'
 )
@@ -51,21 +55,21 @@ config.read('settings.conf')
 
 baseDir = config['global']['podcasts_dir']
 usePushBullet = config['global']['use_pushbullet']
-pushBulletApi = config['pushBullet']['api_key']
-deviceId = int(config['pushBullet']['device_key'])
+maxRetries = config['global']['retries']
 
 if baseDir == "":
     print("Please add a directory for the podcasts to the config file")
     exit()
 
+if not baseDir.endswith("/"):
+   baseDir += "/"
+
 if usePushBullet == "1":
-    if pushBulletApi == "" or deviceId == "":
-        logging.error("Pushbullet is enabled, but no settings are given")
-        exit()
+    pushBulletApi = config['pushBullet']['api_key']
+    if pushBulletApi == "":
+        logging.error("Pushbullet is enabled, but no settings are given") 
+	usePushBullet = 0
     pb = pushbullet.PushBullet(pushBulletApi)
-    phone = pb.get(deviceId)
-else:
-    phone = None
 
 d = os.path.dirname(baseDir + "This_American_Life/")
 logging.info('[BEG] Starting to parse feed')
@@ -92,12 +96,12 @@ for i in items:
     remoteFile = requests.get(i.media_content[0]['url'])
     if not remoteFile.ok:
         logging.error('[ERR] Could not download file: ' + str(remoteFile.error))
-        pushToPB('File could not be downloaded: ' + i.title, phone)
+        pushToPB('File could not be downloaded: ' + i.title)
         continue
     with open(file, "wb") as local_file:
         local_file.write(remoteFile.content)
     logging.info("[SUC] File successfully downloaded")
-    pushToPB('New episode downloaded: ' + i.title, phone)
+    pushToPB('New episode downloaded: ' + i.title)
 logging.info('[END] Done processing feed')
 exit()
 
